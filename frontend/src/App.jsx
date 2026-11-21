@@ -1,5 +1,6 @@
 
 import { useEffect, useRef, useState } from "react";
+import Letterbox from "./features/letterbox/Letterbox"; 
 import "./App.css";
 
 const apps = [
@@ -173,17 +174,7 @@ function App() {
   function renderContent(id) {
     switch (id) {
       case "letters":
-        return (
-          <>
-            <h2>My Letterbox 💌</h2>
-            <p>Your little collection of unsent words.</p>
-            <div className="empty-state">
-              <span>✉</span>
-              <p>Your letterbox is waiting for its first letter.</p>
-              <small>Letter Studio is coming soon!</small>
-            </div>
-          </>
-        );
+        return <Letterbox />
 
       case "diary":
         return (

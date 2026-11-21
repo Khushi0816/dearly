@@ -1,0 +1,253 @@
+
+/* Letter Writing Popup */
+
+.letter-editor-overlay {
+    position: static;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    background: transparent;
+}
+
+.letter-editor-window {
+    width: 100%;
+    max-height: none;
+    overflow: visible;
+    background: #fff3df;
+    border: 3px solid #754c68;
+    box-shadow: 7px 7px 0 #754c68;
+}
+
+.letter-editor-titlebar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: #cc83a1;
+    border-bottom: 3px solid #754c68;
+    color: white;
+    font-weight: bold;
+}
+
+.editor-close-btn {
+    width: 30px;
+    height: 28px;
+    background: #fff0f3;
+    border: 2px solid #754c68;
+    color: #754c68;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.letter-editor {
+    min-height: 0;
+    overflow-y: auto;
+    padding: 24px;
+}
+
+.letter-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.letter-form input,
+.letter-form textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+    background: #fffaf2;
+    border: 2px solid #c987a5;
+    color: #754c68;
+    font: inherit;
+}
+
+.letter-form textarea {
+    resize: vertical;
+    min-height: 140px;
+    max-height: 220px;
+}
+
+.letter-editor-actions {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 20px;
+    padding: 12px 0;
+    border-top: 1px solid #e4bdcc;
+}
+
+.letter-editor-actions button {
+    padding: 10px 16px;
+    border: 2px solid #754c68;
+    cursor: pointer;
+    font: inherit;
+}
+
+.cancel-letter-btn {
+    background: #fff0f3;
+    color: #754c68;
+}
+
+.save-letter-btn {
+    background: #cc83a1;
+    color: white;
+}
+
+.complete-letter-btn {
+    background: #bdce92;
+    color: #493d42;
+}
+/* Saved Letter Cards */
+
+.saved-letters {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 20px;
+    padding: 20px 0;
+}
+
+.letter-card {
+    padding: 18px;
+    background: #fff3df;
+    border: 2px solid #754c68;
+    box-shadow: 4px 4px 0 #754c68;
+}
+
+.letter-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.letter-card h3 {
+    margin: 0;
+    color: #754c68;
+}
+
+.letter-status {
+    padding: 4px 8px;
+    font-size: 12px;
+    border: 1px solid #754c68;
+}
+
+.letter-status.draft {
+    background: #fff0f3;
+    color: #754c68;
+}
+
+.letter-status.completed {
+    background: #bdce92;
+    color: #493d42;
+}
+
+.letter-date {
+    font-size: 12px;
+    color: #98758a;
+    margin: 12px 0;
+}
+
+.letter-preview {
+    color: #754c68;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+/* Read Letter Window */
+
+.letter-reader-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(45, 20, 40, 0.45);
+}
+
+.letter-reader-window {
+    width: min(600px, 90%);
+    max-height: 75vh;
+    display: flex;
+    flex-direction: column;
+    background: #fff3df;
+    border: 3px solid #754c68;
+    box-shadow: 7px 7px 0 #754c68;
+}
+
+.letter-reader-titlebar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #cc83a1;
+    color: white;
+    font-weight: bold;
+    border-bottom: 3px solid #754c68;
+}
+
+.reader-close-btn {
+    background: #fff0f3;
+    border: 2px solid #754c68;
+    color: #754c68;
+    font-size: 20px;
+    cursor: pointer;
+    width: 30px;
+    height: 28px;
+}
+
+.letter-reader-content {
+    padding: 25px;
+    overflow-y: auto;
+}
+
+.letter-reader-content h2 {
+    color: #754c68;
+    margin-top: 18px;
+}
+
+.full-letter-content {
+    margin-top: 25px;
+    color: #754c68;
+    line-height: 1.9;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-size: 16px;
+}
+
+.read-letter-btn {
+    margin-top: 15px;
+    padding: 8px 14px;
+    background: #fff0f3;
+    color: #754c68;
+    border: 2px solid #754c68;
+    cursor: pointer;
+    font: inherit;
+}
+.edit-letter-btn {
+    margin-top: 15px;
+    margin-left: 10px;
+    padding: 8px 14px;
+    background: #bdce92;
+    color: #493d42;
+    border: 2px solid #754c68;
+    cursor: pointer;
+    font: inherit;
+}
+.delete-letter-btn {
+    margin-top: 15px;
+    margin-left: 10px;
+    padding: 8px 14px;
+    background: #fff0f3;
+    color: #a34e69;
+    border: 2px solid #754c68;
+    cursor: pointer;
+    font: inherit;
+}
+
+.delete-letter-btn:hover {
+    background: #f5d2dc;
+}
