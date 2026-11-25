@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import PhotoBooth from "./photobooth/PhotoBooth";
+import PhotoBooth from "./components/photobooth/PhotoBooth";
 import "./Memories.css";
 
 const DB_NAME = "DearlyMemoriesDB";
