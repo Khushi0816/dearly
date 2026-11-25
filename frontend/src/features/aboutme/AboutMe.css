@@ -1,0 +1,544 @@
+
+/* =========================================
+   DEARLY — ABOUT ME
+   Pink Scrapbook Dashboard
+========================================= */
+
+.aboutme-page {
+    width: 100%;
+    max-width: 100%;
+    min-height: 100%;
+    padding: 24px;
+    box-sizing: border-box;
+    color: #704b60;
+}
+
+/* PAGE HEADER */
+
+.aboutme-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 22px;
+    padding-bottom: 17px;
+    border-bottom: 2px dashed #e5b8ca;
+}
+
+.aboutme-eyebrow {
+    margin: 0 0 7px;
+    color: #bd829a;
+    font-size: 9px;
+    font-weight: bold;
+    letter-spacing: 1.5px;
+    line-height: 1.6;
+}
+
+.aboutme-heading h1 {
+    margin: 0;
+    color: #a95f80;
+    font-family: Georgia, serif;
+    font-size: 27px;
+}
+
+.aboutme-heading h1 span {
+    color: #d58aa6;
+}
+
+.aboutme-heading > div > p:last-child {
+    margin: 8px 0 0;
+    color: #98778a;
+    font-size: 11px;
+}
+
+/* BUTTONS */
+
+.aboutme-edit-button,
+.aboutme-photo-button,
+.aboutme-save-button,
+.aboutme-cancel-button,
+.aboutme-remove-photo {
+    padding: 10px 13px;
+    border: 2px solid #704b60;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 10px;
+}
+
+.aboutme-edit-button {
+    flex-shrink: 0;
+    background: #c9809d;
+    color: white;
+    box-shadow: 3px 3px 0 #704b60;
+}
+
+.aboutme-edit-button:hover,
+.aboutme-save-button:hover {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 #704b60;
+}
+
+/* SAVE MESSAGE */
+
+.aboutme-save-message {
+    padding: 11px;
+    margin-bottom: 17px;
+    border: 1px solid #b6c58a;
+    background: #f0f3df;
+    color: #66734c;
+    font-size: 11px;
+}
+
+/* PROFILE CARD */
+
+.aboutme-profile-card {
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 22px;
+    border: 2px solid #704b60;
+    background: #fff4df;
+    box-shadow: 4px 4px 0 #704b60;
+}
+
+.aboutme-profile-top {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 22px;
+}
+
+.aboutme-avatar {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 85px;
+    height: 85px;
+    overflow: hidden;
+    border: 3px solid #704b60;
+    background: #f4c8d7;
+    box-shadow: 3px 3px 0 #c9809d;
+    color: #bd6487;
+    font-family: Georgia, serif;
+    font-size: 36px;
+}
+
+.aboutme-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.aboutme-profile-intro {
+    flex: 1;
+    min-width: 0;
+}
+
+.aboutme-profile-intro h2 {
+    margin: 4px 0 7px;
+    color: #bd6487;
+    font-family: Georgia, serif;
+    font-size: 23px;
+    overflow-wrap: anywhere;
+}
+
+.aboutme-nickname {
+    margin: 0 0 7px;
+    color: #bd829a;
+    font-size: 10px;
+}
+
+.aboutme-bio {
+    margin: 0;
+    color: #765568;
+    font-size: 11px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.aboutme-location {
+    margin: 9px 0 0;
+    color: #a48695;
+    font-size: 10px;
+}
+
+.aboutme-heart-decoration {
+    align-self: flex-start;
+    color: #d58aa6;
+    font-size: 25px;
+}
+
+/* SECTION HEADINGS */
+
+.aboutme-section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 13px;
+}
+
+.aboutme-section-heading h2 {
+    margin: 0;
+    color: #704b60;
+    font-family: Georgia, serif;
+    font-size: 17px;
+}
+
+.aboutme-section-heading span {
+    color: #c9809d;
+    font-size: 19px;
+}
+
+/* FAVOURITES */
+
+.aboutme-view-section {
+    margin-bottom: 22px;
+}
+
+.aboutme-favourites-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.aboutme-favourite-card {
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid #dbaabd;
+    background: #fffaf2;
+    box-shadow: 2px 2px 0 #e8c1d0;
+}
+
+.aboutme-favourite-card > span {
+    display: block;
+    margin-bottom: 7px;
+    font-size: 21px;
+}
+
+.aboutme-favourite-card p {
+    margin: 0 0 5px;
+    color: #a48695;
+    font-size: 9px;
+}
+
+.aboutme-favourite-card h3 {
+    margin: 0;
+    color: #704b60;
+    font-family: Georgia, serif;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+
+/* CURRENT CHAPTER */
+
+.aboutme-chapter-card {
+    padding: 19px;
+    margin-bottom: 20px;
+    border: 2px solid #704b60;
+    background: #fbeaf0;
+    box-shadow: 3px 3px 0 #c9809d;
+}
+
+.aboutme-chapter-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.aboutme-chapter-content h3 {
+    margin: 7px 0;
+    color: #bd6487;
+    font-family: Georgia, serif;
+    font-size: 12px;
+}
+
+.aboutme-chapter-content p {
+    margin: 0;
+    color: #765568;
+    font-size: 10px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+/* QUOTE */
+
+.aboutme-quote-card {
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 2px dashed #c9809d;
+    background: #fff4df;
+    text-align: center;
+}
+
+.aboutme-quote-card > span {
+    color: #c9809d;
+    font-family: Georgia, serif;
+    font-size: 38px;
+    line-height: 0.8;
+}
+
+.aboutme-quote-card p {
+    margin: 8px 0 12px;
+    color: #704b60;
+    font-family: Georgia, serif;
+    font-size: 15px;
+    font-style: italic;
+    line-height: 1.7;
+    white-space: pre-wrap;
+}
+
+.aboutme-quote-card small {
+    color: #bd829a;
+    font-size: 8px;
+    letter-spacing: 1.5px;
+}
+
+.aboutme-footer {
+    margin: 20px 0 5px;
+    color: #bd829a;
+    font-size: 9px;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+/* EMPTY PROFILE */
+
+.aboutme-empty-note {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 250px;
+    padding: 25px;
+    border: 2px dashed #dbaabd;
+    background: #fff4df;
+    text-align: center;
+}
+
+.aboutme-empty-note > span {
+    margin-bottom: 10px;
+    font-size: 38px;
+}
+
+.aboutme-empty-note h2 {
+    margin: 0 0 8px;
+    color: #a95f80;
+    font-family: Georgia, serif;
+    font-size: 20px;
+}
+
+.aboutme-empty-note p {
+    max-width: 300px;
+    margin: 0 0 17px;
+    color: #98778a;
+    font-size: 11px;
+    line-height: 1.7;
+}
+
+.aboutme-empty-note button {
+    padding: 11px 17px;
+    border: 2px solid #704b60;
+    background: #c9809d;
+    color: white;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 10px;
+    box-shadow: 3px 3px 0 #704b60;
+}
+
+/* EDIT FORM */
+
+.aboutme-edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 20px;
+    border: 2px solid #704b60;
+    background: #fff4df;
+    box-shadow: 4px 4px 0 #704b60;
+}
+
+.aboutme-form-header h2 {
+    margin: 0 0 6px;
+    color: #bd6487;
+    font-family: Georgia, serif;
+    font-size: 19px;
+}
+
+.aboutme-form-header p {
+    margin: 0;
+    color: #a48695;
+    font-size: 10px;
+    line-height: 1.7;
+}
+
+.aboutme-form-section {
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+    padding: 16px;
+    border: 1px solid #e3bdcc;
+    background: #fffaf2;
+}
+
+.aboutme-form-section h3 {
+    margin: 0;
+    color: #bd6487;
+    font-family: Georgia, serif;
+    font-size: 15px;
+}
+
+.aboutme-photo-editor {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    padding-bottom: 13px;
+    border-bottom: 1px dashed #e3bdcc;
+}
+
+.aboutme-photo-editor p {
+    margin: 7px 0 0;
+    color: #a48695;
+    font-size: 9px;
+}
+
+.aboutme-photo-button {
+    background: #c9809d;
+    color: white;
+}
+
+.aboutme-remove-photo {
+    margin-left: 7px;
+    background: #f7e0e5;
+    color: #704b60;
+}
+
+/* FORM FIELDS */
+
+.aboutme-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 13px;
+}
+
+.aboutme-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+}
+
+.aboutme-field label {
+    color: #704b60;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.aboutme-field input,
+.aboutme-field textarea {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 11px;
+    border: 1px solid #d7a1b6;
+    border-radius: 0;
+    outline: none;
+    background: #fff4df;
+    color: #704b60;
+    font-family: inherit;
+    font-size: 11px;
+}
+
+.aboutme-field input {
+    height: 40px;
+}
+
+.aboutme-field textarea {
+    min-height: 75px;
+    resize: vertical;
+    line-height: 1.7;
+}
+
+.aboutme-field input:focus,
+.aboutme-field textarea:focus {
+    border-color: #a85f7e;
+    box-shadow: 0 0 0 2px #f4d6e1;
+}
+
+/* FORM ACTIONS */
+
+.aboutme-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-top: 14px;
+    border-top: 1px solid #e3bdcc;
+}
+
+.aboutme-cancel-button {
+    background: #fffaf2;
+    color: #704b60;
+}
+
+.aboutme-save-button {
+    background: #c9809d;
+    color: white;
+    box-shadow: 3px 3px 0 #704b60;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 520px) {
+    .aboutme-page {
+        padding: 15px;
+    }
+
+    .aboutme-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .aboutme-profile-top {
+        align-items: flex-start;
+        gap: 13px;
+        padding: 15px;
+    }
+
+    .aboutme-avatar {
+        width: 65px;
+        height: 65px;
+        font-size: 28px;
+    }
+
+    .aboutme-profile-intro h2 {
+        font-size: 19px;
+    }
+
+    .aboutme-favourites-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .aboutme-chapter-content {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .aboutme-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .aboutme-edit-form {
+        padding: 13px;
+    }
+
+    .aboutme-form-section {
+        padding: 12px;
+    }
+}

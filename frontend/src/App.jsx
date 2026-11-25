@@ -1,6 +1,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import Letterbox from "./features/letterbox/Letterbox"; 
+import Diary from "./features/diary/Diary";
+import FutureMe from "./features/futureMe/FutureMe";
+import Memories from "./features/memories/Memories";
+import AboutMe from "./features/aboutme/AboutMe";
+import Settings from "./features/settings/Settings";
 import "./App.css";
 
 const apps = [
@@ -177,69 +182,19 @@ function App() {
         return <Letterbox />
 
       case "diary":
-        return (
-          <>
-            <h2>My Diary 📓</h2>
-            <p>A safe place for today's thoughts.</p>
-            <textarea
-              className="diary-paper"
-              placeholder="Dear diary, today I feel..."
-              rows="7"
-            />
-          </>
-        );
+        return <Diary />;
 
       case "future":
-        return (
-          <>
-            <h2>Future Me 🎀</h2>
-            <p>Letters for the person you're becoming.</p>
-            <div className="empty-state">
-              <span>♡</span>
-              <p>Something beautiful is waiting in your future.</p>
-            </div>
-          </>
-        );
+        return <FutureMe />
 
       case "memories":
-        return (
-          <>
-            <h2>Memory Lane 📸</h2>
-            <p>Collect the little things worth remembering.</p>
-            <div className="empty-state">
-              <span>✿</span>
-              <p>Your memory wall is waiting for photographs.</p>
-            </div>
-          </>
-        );
+        return <Memories />
 
       case "about":
-        return (
-          <>
-            <h2>A little about me 💗</h2>
-            <div className="profile-card">
-              <div className="pixel-avatar">♡</div>
-              <h3>The girl behind the letters</h3>
-              <p>A dreamer, a writer and a collector of feelings.</p>
-            </div>
-          </>
-        );
+        return <AboutMe />
 
       case "settings":
-        return (
-          <>
-            <h2>Settings ⚙️</h2>
-            <p>Customize your little world.</p>
-            <div className="settings-item">
-              <span>Theme</span>
-              <strong>Cotton Candy Pink ♡</strong>
-            </div>
-            <div className="settings-item">
-              <span>Interface</span>
-              <strong>Pixel Desktop</strong>
-            </div>
-          </>
-        );
+        return <Settings/>
 
       default:
         return null;
