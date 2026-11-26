@@ -1,17 +1,16 @@
-
-import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
+import { apiRequest } from "../../services/api";
 import "./Letterbox.css";
 
-const STORAGE_KEY = "dearlyLetters";
-
-function loadLetters() {
-    try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        return saved ? JSON.parse(saved) : [];
-    } catch (error) {
-        console.error("Could not load letters:", error);
-        return [];
-    }
+function normalizeLetter(letter) {
+    return {
+        id: letter.id,
+        title: letter.title,
+        content: letter.content,
+        status: letter.status || "completed",
+        createdAt: letter.created_at,
+        updatedAt: letter.updated_at,
+    };
 }
 
 function formatDate(date) {
@@ -25,34 +24,55 @@ function formatDate(date) {
 }
 
 function Letterbox() {
-    const [letters, setLetters] = useState(loadLetters);
+    const [letters, setLetters] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
 
-    // Editor state
     const [showEditor, setShowEditor] = useState(false);
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
     const [status, setStatus] = useState("completed");
     const [editingLetterId, setEditingLetterId] = useState(null);
 
-    // Reader state
     const [selectedLetter, setSelectedLetter] = useState(null);
 
-    // Search, filter and sorting
     const [searchTerm, setSearchTerm] = useState("");
     const [activeFilter, setActiveFilter] = useState("all");
     const [sortOrder, setSortOrder] = useState("newest");
 
-    // Draggable editor window
     const [windowPosition, setWindowPosition] = useState(null);
     const [isDragging, setIsDragging] = useState(false);
     const dragOffset = useRef({ x: 0, y: 0 });
 
-    // Persist letters
+    // Load letters from the authenticated user's database.
     useEffect(() => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(letters));
-    }, [letters]);
+        let active = true;
 
-    // Drag the editor window using its title bar
+        async function fetchLetters() {
+            try {
+                const data = await apiRequest("/letters/");
+                if (active) {
+                    setLetters(data.map(normalizeLetter));
+                    setErrorMessage("");
+                }
+            } catch (error) {
+                if (active) {
+                    setErrorMessage(error.message);
+                }
+            } finally {
+                if (active) setIsLoading(false);
+            }
+        }
+
+        fetchLetters();
+
+        return () => {
+            active = false;
+        };
+    }, []);
+
+    // Drag the editor window.
     useEffect(() => {
         if (!isDragging) return;
 
@@ -94,6 +114,7 @@ function Letterbox() {
         setStatus("completed");
         setEditingLetterId(null);
         setWindowPosition(null);
+        setErrorMessage("");
         setShowEditor(true);
     }
 
@@ -110,73 +131,103 @@ function Letterbox() {
         setEditingLetterId(letter.id);
         setSelectedLetter(null);
         setWindowPosition(null);
+        setErrorMessage("");
         setShowEditor(true);
     }
 
-    function saveLetter(event) {
+    // Create or update a letter through FastAPI.
+    async function saveLetter(event) {
         event.preventDefault();
 
         if (!title.trim() || !content.trim()) {
-            alert("Please add a title and write something in your letter. ♡");
+            setErrorMessage(
+                "Please add a title and write something in your letter. ♡"
+            );
             return;
         }
 
-        const now = new Date().toISOString();
+        setIsSaving(true);
+        setErrorMessage("");
 
-        if (editingLetterId) {
-            setLetters((previousLetters) =>
-                previousLetters.map((letter) =>
-                    letter.id === editingLetterId
-                        ? {
-                              ...letter,
-                              title: title.trim(),
-                              content: content.trim(),
-                              status,
-                              updatedAt: now,
-                          }
-                        : letter
-                )
-            );
-        } else {
-            const newLetter = {
-                id: crypto.randomUUID(),
-                title: title.trim(),
-                content: content.trim(),
-                status,
-                createdAt: now,
-                updatedAt: now,
-            };
+        const payload = {
+            title: title.trim(),
+            content: content.trim(),
+            status,
+        };
 
-            setLetters((previousLetters) => [
-                newLetter,
-                ...previousLetters,
-            ]);
+        try {
+            let savedLetter;
+
+            if (editingLetterId !== null) {
+                savedLetter = await apiRequest(
+                    `/letters/${editingLetterId}`,
+                    {
+                        method: "PATCH",
+                        body: JSON.stringify(payload),
+                    }
+                );
+
+                const normalized = normalizeLetter(savedLetter);
+
+                setLetters((previous) =>
+                    previous.map((letter) =>
+                        letter.id === editingLetterId
+                            ? normalized
+                            : letter
+                    )
+                );
+            } else {
+                savedLetter = await apiRequest("/letters/", {
+                    method: "POST",
+                    body: JSON.stringify(payload),
+                });
+
+                setLetters((previous) => [
+                    normalizeLetter(savedLetter),
+                    ...previous,
+                ]);
+            }
+
+            closeEditor();
+        } catch (error) {
+            setErrorMessage(error.message);
+        } finally {
+            setIsSaving(false);
         }
-
-        closeEditor();
     }
 
-    function deleteLetter(id) {
+    // Delete a letter through FastAPI.
+    async function deleteLetter(id) {
         const confirmed = window.confirm(
             "Are you sure you want to delete this letter? 💔"
         );
 
         if (!confirmed) return;
 
-        setLetters((previousLetters) =>
-            previousLetters.filter((letter) => letter.id !== id)
-        );
+        setErrorMessage("");
 
-        if (selectedLetter?.id === id) {
-            setSelectedLetter(null);
+        try {
+            await apiRequest(`/letters/${id}`, {
+                method: "DELETE",
+            });
+
+            setLetters((previous) =>
+                previous.filter((letter) => letter.id !== id)
+            );
+
+            if (selectedLetter?.id === id) {
+                setSelectedLetter(null);
+            }
+        } catch (error) {
+            setErrorMessage(error.message);
         }
     }
 
     function startDragging(event) {
-        // Only start dragging with the left mouse button.
         if (event.button !== 0) return;
 
-        const rect = event.currentTarget.parentElement.getBoundingClientRect();
+        const rect =
+            event.currentTarget.parentElement.getBoundingClientRect();
 
         dragOffset.current = {
             x: event.clientX - rect.left,
@@ -216,8 +267,6 @@ function Letterbox() {
 
     return (
         <div className="letterbox-page">
-
-            {/* PAGE HEADER */}
             <div className="letterbox-heading">
                 <div>
                     <p className="letterbox-eyebrow">
@@ -240,7 +289,12 @@ function Letterbox() {
                 </button>
             </div>
 
-            {/* SEARCH AND FILTERS */}
+            {errorMessage && (
+                <p role="alert" className="letterbox-error">
+                    {errorMessage}
+                </p>
+            )}
+
             <div className="letterbox-toolbar">
                 <input
                     type="text"
@@ -278,8 +332,11 @@ function Letterbox() {
                 ))}
             </div>
 
-            {/* LETTER CARDS */}
-            {filteredLetters.length === 0 ? (
+            {isLoading ? (
+                <div className="empty-letterbox">
+                    <p>Opening your letters... ♡</p>
+                </div>
+            ) : filteredLetters.length === 0 ? (
                 <div className="empty-letterbox">
                     <div className="empty-letter-icon">💌</div>
 
@@ -349,9 +406,7 @@ function Letterbox() {
 
                                     <button
                                         className="delete-letter-btn"
-                                        onClick={() =>
-                                            deleteLetter(letter.id)
-                                        }
+                                        onClick={() => deleteLetter(letter.id)}
                                     >
                                         Delete 🗑️
                                     </button>
@@ -362,7 +417,6 @@ function Letterbox() {
                 </div>
             )}
 
-            {/* NEW LETTER / EDIT LETTER WINDOW */}
             {showEditor && (
                 <div
                     className="letter-editor-overlay"
@@ -392,7 +446,7 @@ function Letterbox() {
                         >
                             <span>
                                 💌{" "}
-                                {editingLetterId
+                                {editingLetterId !== null
                                     ? "Edit Your Letter"
                                     : "A Little Letter"}
                             </span>
@@ -416,9 +470,7 @@ function Letterbox() {
                         >
                             <div className="letter-editor-intro">
                                 <h2>Write a little something...</h2>
-                                <p>
-                                    Your personal space, just for you. 💗
-                                </p>
+                                <p>Your personal space, just for you. 💌</p>
                             </div>
 
                             <label htmlFor="letter-title">
@@ -462,13 +514,15 @@ function Letterbox() {
                                     setStatus(event.target.value)
                                 }
                             >
-                                <option value="completed">
-                                    Completed
-                                </option>
-                                <option value="draft">
-                                    Save as Draft
-                                </option>
+                                <option value="completed">Completed</option>
+                                <option value="draft">Save as Draft</option>
                             </select>
+
+                            {errorMessage && (
+                                <p role="alert" className="letterbox-error">
+                                    {errorMessage}
+                                </p>
+                            )}
 
                             <div className="letter-editor-actions">
                                 <button
@@ -482,10 +536,13 @@ function Letterbox() {
                                 <button
                                     type="submit"
                                     className="save-letter-btn"
+                                    disabled={isSaving}
                                 >
-                                    {editingLetterId
-                                        ? "Save Changes ♡"
-                                        : "Save Letter ♡"}
+                                    {isSaving
+                                        ? "Saving..."
+                                        : editingLetterId !== null
+                                          ? "Save Changes ♡"
+                                          : "Save Letter ♡"}
                                 </button>
                             </div>
                         </form>
@@ -493,7 +550,6 @@ function Letterbox() {
                 </div>
             )}
 
-            {/* READ LETTER WINDOW */}
             {selectedLetter && (
                 <div
                     className="letter-reader-overlay"
@@ -549,7 +605,6 @@ function Letterbox() {
                     </div>
                 </div>
             )}
-
         </div>
     );
 }

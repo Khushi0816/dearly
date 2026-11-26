@@ -1,0 +1,1371 @@
+
+
+========== pyproject.toml ==========
+
+[project]
+name = "dearly"
+version = "0.1.0"
+description = "Dearly - A private digital diary and memory archive"
+readme = "README.md"
+authors = [
+    { name = "Khushi Singh", email = "khushi.singh1661@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi[standard]>=0.162.0",
+    "sqlalchemy>=2.1.9",
+]
+
+[tool.uv.build-backend]
+module-name = "backend"
+module-root = "src"
+
+[project.scripts]
+backend = "backend.main:app"
+
+[build-system]
+requires = ["uv_build>=0.13.5,<0.14.0"]
+build-backend = "uv_build"
+
+
+========== src\backend\main.py ==========
+
+from pathlib import Path
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
+from backend.core.config import settings
+from backend.database.connection import Base, engine
+
+# Import every model before creating tables
+from backend.models import (
+    Letter,
+    DiaryEntry,
+    FutureLetter,
+    MemoryPhoto,
+    AboutMe,
+    UserSettings
+)
+
+from backend.routers import (
+    health,
+    letters,
+    diary,
+    future_me,
+    memories,
+    about_me,
+    settings as settings_router
+)
+
+
+# Initialize all database tables
+Base.metadata.create_all(bind=engine)
+
+UPLOAD_DIR = Path("uploads")
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+
+app = FastAPI(
+    title=settings.APP_NAME,
+    version=settings.APP_VERSION
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[settings.FRONTEND_URL],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Register all API routers
+app.include_router(health.router)
+app.include_router(letters.router)
+app.include_router(diary.router)
+app.include_router(future_me.router)
+app.include_router(memories.router)
+app.include_router(about_me.router)
+app.include_router(settings_router.router)
+
+# Serve uploaded photographs
+app.mount(
+    "/uploads",
+    StaticFiles(directory=str(UPLOAD_DIR)),
+    name="uploads"
+)
+
+
+========== src\backend\core\config.py ==========
+
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    APP_NAME: str = "Dearly API"
+    APP_VERSION: str = "0.1.0"
+    FRONTEND_URL: str = "http://localhost:5173"
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        extra="ignore"
+    )
+
+
+settings = Settings()
+
+
+========== src\backend\database\connection.py ==========
+
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, DeclarativeBase
+
+# SQLite database location
+DATABASE_URL = "sqlite:///./dearly.db"
+
+# Create database engine
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"check_same_thread": False}
+)
+
+# Create database sessions
+SessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine
+)
+
+# Base class for all database models
+class Base(DeclarativeBase):
+    pass
+
+
+# Database session dependency
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+========== src\backend\models\__init__.py ==========
+
+from backend.models.letter import Letter
+from backend.models.diary import DiaryEntry
+from backend.models.future_letter import FutureLetter
+from backend.models.memory import MemoryPhoto
+from backend.models.about_me import AboutMe
+from backend.models.settings import UserSettings
+
+
+========== src\backend\models\letter.py ==========
+
+from datetime import datetime, timezone
+
+from sqlalchemy import String, Text, DateTime
+from sqlalchemy.orm import Mapped, mapped_column
+
+from backend.database.connection import Base
+
+
+class Letter(Base):
+    __tablename__ = "letters"
+
+    id: Mapped[int] = mapped_column(
+        primary_key=True,
+        index=True
+    )
+
+    title: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False
+    )
+
+    content: Mapped[str] = mapped_column(
+        Text,
+        nullable=False
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc)
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
+    )
+
+
+========== src\backend\models\diary.py ==========
+
+from datetime import datetime, timezone, date
+
+from sqlalchemy import String, Text, DateTime, Date
+from sqlalchemy.orm import Mapped, mapped_column
+
+from backend.database.connection import Base
+
+
+class DiaryEntry(Base):
+    __tablename__ = "diary_entries"
+
+    id: Mapped[int] = mapped_column(
+        primary_key=True,
+        index=True
+    )
+
+    title: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False
+    )
+
+    content: Mapped[str] = mapped_column(
+        Text,
+        nullable=False
+    )
+
+    mood: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True
+    )
+
+    entry_date: Mapped[date] = mapped_column(
+        Date,
+        default=date.today,
+        nullable=False
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc)
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
+    )
+
+
+========== src\backend\models\future_letter.py ==========
+
+from datetime import datetime, timezone, date
+
+from sqlalchemy import String, Text, Date, DateTime
+from sqlalchemy.orm import Mapped, mapped_column
+
+from backend.database.connection import Base
+
+
+class FutureLetter(Base):
+    __tablename__ = "future_letters"
+
+    id: Mapped[int] = mapped_column(
+        primary_key=True,
+        index=True
+    )
+
+    title: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False
+    )
+
+    content: Mapped[str] = mapped_column(
+        Text,
+        nullable=False
+    )
+
+    unlock_date: Mapped[date] = mapped_column(
+        Date,
+        nullable=False
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc)
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
+    )
+
+    @property
+    def is_unlocked(self):
+        return self.unlock_date <= date.today()
+
+
+========== src\backend\models\memory.py ==========
+
+from datetime import datetime, timezone
+
+from sqlalchemy import String, Text, DateTime, Integer
+from sqlalchemy.orm import Mapped, mapped_column
+
+from backend.database.connection import Base
+
+
+class MemoryPhoto(Base):
+    __tablename__ = "memory_photos"
+
+    id: Mapped[int] = mapped_column(
+        primary_key=True,
+        index=True
+    )
+
+    caption: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True
+    )
+
+    original_name: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False
+    )
+
+    stored_name: Mapped[str] = mapped_column(
+        String(255),
+        unique=True,
+        nullable=False
+    )
+
+    content_type: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False
+    )
+
+    file_size: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc)
+    )
+
+
+========== src\backend\models\about_me.py ==========
+
+from sqlalchemy import String, Text
+from sqlalchemy.orm import Mapped, mapped_column
+
+from backend.database.connection import Base
+
+
+class AboutMe(Base):
+    __tablename__ = "about_me"
+
+    id: Mapped[int] = mapped_column(
+        primary_key=True,
+        default=1
+    )
+
+    name: Mapped[str] = mapped_column(String(255), default="")
+    nickname: Mapped[str] = mapped_column(String(255), default="")
+    bio: Mapped[str] = mapped_column(Text, default="")
+    location: Mapped[str] = mapped_column(String(255), default="")
+
+    favouriteColor: Mapped[str] = mapped_column(String(255), default="")
+    favouriteSong: Mapped[str] = mapped_column(String(255), default="")
+    favouriteBook: Mapped[str] = mapped_column(String(255), default="")
+    favouriteMovie: Mapped[str] = mapped_column(String(255), default="")
+    favouriteFood: Mapped[str] = mapped_column(String(255), default="")
+    favouriteHobby: Mapped[str] = mapped_column(String(255), default="")
+
+    currentChapter: Mapped[str] = mapped_column(Text, default="")
+    currentGoal: Mapped[str] = mapped_column(Text, default="")
+    favouriteQuote: Mapped[str] = mapped_column(Text, default="")
+    quoteAuthor: Mapped[str] = mapped_column(String(255), default="")
+
+    profileImage: Mapped[str] = mapped_column(Text, default="")
+
+
+========== src\backend\models\settings.py ==========
+
+from sqlalchemy import String, Boolean
+from sqlalchemy.orm import Mapped, mapped_column
+
+from backend.database.connection import Base
+
+
+class UserSettings(Base):
+    __tablename__ = "user_settings"
+
+    id: Mapped[int] = mapped_column(
+        primary_key=True,
+        default=1
+    )
+
+    displayName: Mapped[str] = mapped_column(
+        String(255),
+        default=""
+    )
+
+    theme: Mapped[str] = mapped_column(
+        String(50),
+        default="pink"
+    )
+
+    confirmBeforeDelete: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True
+    )
+
+    compactMode: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False
+    )
+
+
+========== src\backend\schemas\letter.py ==========
+
+from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class LetterCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=255)
+    content: str = Field(min_length=1)
+
+
+class LetterUpdate(BaseModel):
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    content: str | None = Field(default=None, min_length=1)
+
+
+class LetterResponse(BaseModel):
+    id: int
+    title: str
+    content: str
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+========== src\backend\schemas\diary.py ==========
+
+from datetime import datetime, date
+
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class DiaryCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=255)
+    content: str = Field(min_length=1)
+    mood: str | None = None
+    entry_date: date | None = None
+
+
+class DiaryUpdate(BaseModel):
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    content: str | None = Field(default=None, min_length=1)
+    mood: str | None = None
+    entry_date: date | None = None
+
+
+class DiaryResponse(BaseModel):
+    id: int
+    title: str
+    content: str
+    mood: str | None
+    entry_date: date
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+========== src\backend\schemas\future_letter.py ==========
+
+from datetime import datetime, date
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+
+class FutureLetterCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=255)
+    content: str = Field(min_length=1)
+    unlock_date: date
+
+    @field_validator("unlock_date")
+    @classmethod
+    def validate_unlock_date(cls, value):
+        if value < date.today():
+            raise ValueError("Unlock date cannot be in the past")
+        return value
+
+
+class FutureLetterUpdate(BaseModel):
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    content: str | None = Field(default=None, min_length=1)
+    unlock_date: date | None = None
+
+    @field_validator("unlock_date")
+    @classmethod
+    def validate_unlock_date(cls, value):
+        if value is not None and value < date.today():
+            raise ValueError("Unlock date cannot be in the past")
+        return value
+
+
+class FutureLetterResponse(BaseModel):
+    id: int
+    title: str
+    content: str | None
+    unlock_date: date
+    created_at: datetime
+    updated_at: datetime
+    is_unlocked: bool
+    days_remaining: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+========== src\backend\schemas\memory.py ==========
+
+from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict
+
+
+class MemoryPhotoUpdate(BaseModel):
+    caption: str | None = None
+
+
+class MemoryPhotoResponse(BaseModel):
+    id: int
+    caption: str | None
+    original_name: str
+    content_type: str
+    file_size: int
+    photo_url: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+========== src\backend\schemas\about_me.py ==========
+
+from pydantic import BaseModel, ConfigDict
+
+
+class AboutMeUpdate(BaseModel):
+    name: str | None = None
+    nickname: str | None = None
+    bio: str | None = None
+    location: str | None = None
+
+    favouriteColor: str | None = None
+    favouriteSong: str | None = None
+    favouriteBook: str | None = None
+    favouriteMovie: str | None = None
+    favouriteFood: str | None = None
+    favouriteHobby: str | None = None
+
+    currentChapter: str | None = None
+    currentGoal: str | None = None
+    favouriteQuote: str | None = None
+    quoteAuthor: str | None = None
+
+    profileImage: str | None = None
+
+
+class AboutMeResponse(BaseModel):
+    id: int
+    name: str
+    nickname: str
+    bio: str
+    location: str
+
+    favouriteColor: str
+    favouriteSong: str
+    favouriteBook: str
+    favouriteMovie: str
+    favouriteFood: str
+    favouriteHobby: str
+
+    currentChapter: str
+    currentGoal: str
+    favouriteQuote: str
+    quoteAuthor: str
+
+    profileImage: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+========== src\backend\schemas\settings.py ==========
+
+from typing import Literal
+
+from pydantic import BaseModel, ConfigDict
+
+
+class SettingsUpdate(BaseModel):
+    displayName: str | None = None
+    theme: Literal["pink", "lavender", "peach", "mint"] | None = None
+    confirmBeforeDelete: bool | None = None
+    compactMode: bool | None = None
+
+
+class SettingsResponse(BaseModel):
+    id: int
+    displayName: str
+    theme: Literal["pink", "lavender", "peach", "mint"]
+    confirmBeforeDelete: bool
+    compactMode: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+========== src\backend\routers\letters.py ==========
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
+from backend.database.connection import get_db
+from backend.models import Letter
+from backend.schemas.letter import (
+    LetterCreate,
+    LetterUpdate,
+    LetterResponse
+)
+
+router = APIRouter(prefix="/letters", tags=["Letters"])
+
+
+@router.post(
+    "/",
+    response_model=LetterResponse,
+    status_code=status.HTTP_201_CREATED
+)
+def create_letter(
+    letter_data: LetterCreate,
+    db: Session = Depends(get_db)
+):
+    new_letter = Letter(
+        title=letter_data.title,
+        content=letter_data.content
+    )
+
+    db.add(new_letter)
+    db.commit()
+    db.refresh(new_letter)
+
+    return new_letter
+
+
+@router.get("/", response_model=list[LetterResponse])
+def get_letters(db: Session = Depends(get_db)):
+    return (
+        db.query(Letter)
+        .order_by(Letter.created_at.desc())
+        .all()
+    )
+
+
+@router.get("/{letter_id}", response_model=LetterResponse)
+def get_letter(
+    letter_id: int,
+    db: Session = Depends(get_db)
+):
+    letter = db.query(Letter).filter(
+        Letter.id == letter_id
+    ).first()
+
+    if letter is None:
+        raise HTTPException(status_code=404, detail="Letter not found")
+
+    return letter
+
+
+@router.patch("/{letter_id}", response_model=LetterResponse)
+def update_letter(
+    letter_id: int,
+    letter_data: LetterUpdate,
+    db: Session = Depends(get_db)
+):
+    letter = db.query(Letter).filter(
+        Letter.id == letter_id
+    ).first()
+
+    if letter is None:
+        raise HTTPException(status_code=404, detail="Letter not found")
+
+    updates = letter_data.model_dump(exclude_unset=True)
+
+    for field, value in updates.items():
+        setattr(letter, field, value)
+
+    db.commit()
+    db.refresh(letter)
+
+    return letter
+
+
+@router.delete(
+    "/{letter_id}",
+    status_code=status.HTTP_204_NO_CONTENT
+)
+def delete_letter(
+    letter_id: int,
+    db: Session = Depends(get_db)
+):
+    letter = db.query(Letter).filter(
+        Letter.id == letter_id
+    ).first()
+
+    if letter is None:
+        raise HTTPException(status_code=404, detail="Letter not found")
+
+    db.delete(letter)
+    db.commit()
+
+    return None
+
+
+========== src\backend\routers\diary.py ==========
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
+from backend.database.connection import get_db
+from backend.models import DiaryEntry
+from backend.schemas.diary import (
+    DiaryCreate,
+    DiaryUpdate,
+    DiaryResponse
+)
+
+router = APIRouter(prefix="/diary", tags=["Diary"])
+
+
+# CREATE DIARY ENTRY
+@router.post(
+    "/",
+    response_model=DiaryResponse,
+    status_code=status.HTTP_201_CREATED
+)
+def create_entry(
+    entry_data: DiaryCreate,
+    db: Session = Depends(get_db)
+):
+    new_entry = DiaryEntry(
+        title=entry_data.title,
+        content=entry_data.content,
+        mood=entry_data.mood,
+        entry_date=entry_data.entry_date
+    )
+
+    db.add(new_entry)
+    db.commit()
+    db.refresh(new_entry)
+
+    return new_entry
+
+
+# GET ALL DIARY ENTRIES
+@router.get("/", response_model=list[DiaryResponse])
+def get_entries(db: Session = Depends(get_db)):
+    return (
+        db.query(DiaryEntry)
+        .order_by(DiaryEntry.entry_date.desc())
+        .all()
+    )
+
+
+# GET ONE DIARY ENTRY
+@router.get("/{entry_id}", response_model=DiaryResponse)
+def get_entry(
+    entry_id: int,
+    db: Session = Depends(get_db)
+):
+    entry = db.query(DiaryEntry).filter(
+        DiaryEntry.id == entry_id
+    ).first()
+
+    if entry is None:
+        raise HTTPException(status_code=404, detail="Diary entry not found")
+
+    return entry
+
+
+# UPDATE DIARY ENTRY
+@router.patch("/{entry_id}", response_model=DiaryResponse)
+def update_entry(
+    entry_id: int,
+    entry_data: DiaryUpdate,
+    db: Session = Depends(get_db)
+):
+    entry = db.query(DiaryEntry).filter(
+        DiaryEntry.id == entry_id
+    ).first()
+
+    if entry is None:
+        raise HTTPException(status_code=404, detail="Diary entry not found")
+
+    updates = entry_data.model_dump(exclude_unset=True)
+
+    for field, value in updates.items():
+        setattr(entry, field, value)
+
+    db.commit()
+    db.refresh(entry)
+
+    return entry
+
+
+# DELETE DIARY ENTRY
+@router.delete(
+    "/{entry_id}",
+    status_code=status.HTTP_204_NO_CONTENT
+)
+def delete_entry(
+    entry_id: int,
+    db: Session = Depends(get_db)
+):
+    entry = db.query(DiaryEntry).filter(
+        DiaryEntry.id == entry_id
+    ).first()
+
+    if entry is None:
+        raise HTTPException(status_code=404, detail="Diary entry not found")
+
+    db.delete(entry)
+    db.commit()
+
+    return None
+
+
+========== src\backend\routers\future_me.py ==========
+
+from datetime import date
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.orm import Session
+from sqlalchemy import or_
+
+from backend.database.connection import get_db
+from backend.models import FutureLetter
+from backend.schemas.future_letter import (
+    FutureLetterCreate,
+    FutureLetterUpdate,
+    FutureLetterResponse
+)
+
+router = APIRouter(
+    prefix="/future-me",
+    tags=["Future Me"]
+)
+
+
+def format_future_letter(letter):
+    unlocked = letter.unlock_date <= date.today()
+
+    return FutureLetterResponse(
+        id=letter.id,
+        title=letter.title,
+        content=letter.content if unlocked else None,
+        unlock_date=letter.unlock_date,
+        created_at=letter.created_at,
+        updated_at=letter.updated_at,
+        is_unlocked=unlocked,
+        days_remaining=max(
+            0,
+            (letter.unlock_date - date.today()).days
+        )
+    )
+
+
+# CREATE FUTURE LETTER
+@router.post(
+    "/",
+    response_model=FutureLetterResponse,
+    status_code=status.HTTP_201_CREATED
+)
+def create_future_letter(
+    letter_data: FutureLetterCreate,
+    db: Session = Depends(get_db)
+):
+    new_letter = FutureLetter(
+        title=letter_data.title,
+        content=letter_data.content,
+        unlock_date=letter_data.unlock_date
+    )
+
+    db.add(new_letter)
+    db.commit()
+    db.refresh(new_letter)
+
+    return format_future_letter(new_letter)
+
+
+# GET ALL FUTURE LETTERS
+@router.get("/", response_model=list[FutureLetterResponse])
+def get_future_letters(
+    status_filter: str = Query(
+        default="all",
+        alias="status",
+        pattern="^(all|locked|unlocked)$"
+    ),
+    sort: str = Query(
+        default="newest",
+        pattern="^(newest|oldest)$"
+    ),
+    search: str | None = None,
+    db: Session = Depends(get_db)
+):
+    today = date.today()
+
+    query = db.query(FutureLetter)
+
+    if status_filter == "locked":
+        query = query.filter(FutureLetter.unlock_date > today)
+
+    elif status_filter == "unlocked":
+        query = query.filter(FutureLetter.unlock_date <= today)
+
+    if search:
+        search_term = f"%{search}%"
+
+        query = query.filter(
+            or_(
+                FutureLetter.title.ilike(search_term),
+                (
+                    (FutureLetter.unlock_date <= today)
+                    & FutureLetter.content.ilike(search_term)
+                )
+            )
+        )
+
+    if sort == "newest":
+        query = query.order_by(FutureLetter.created_at.desc())
+    else:
+        query = query.order_by(FutureLetter.created_at.asc())
+
+    return [
+        format_future_letter(letter)
+        for letter in query.all()
+    ]
+
+
+# READ ONE UNLOCKED FUTURE LETTER
+@router.get("/{letter_id}", response_model=FutureLetterResponse)
+def get_future_letter(
+    letter_id: int,
+    db: Session = Depends(get_db)
+):
+    letter = db.query(FutureLetter).filter(
+        FutureLetter.id == letter_id
+    ).first()
+
+    if letter is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Future letter not found"
+        )
+
+    if letter.unlock_date > date.today():
+        raise HTTPException(
+            status_code=423,
+            detail="This letter is still locked"
+        )
+
+    return format_future_letter(letter)
+
+
+# UPDATE FUTURE LETTER
+@router.patch("/{letter_id}", response_model=FutureLetterResponse)
+def update_future_letter(
+    letter_id: int,
+    letter_data: FutureLetterUpdate,
+    db: Session = Depends(get_db)
+):
+    letter = db.query(FutureLetter).filter(
+        FutureLetter.id == letter_id
+    ).first()
+
+    if letter is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Future letter not found"
+        )
+
+    updates = letter_data.model_dump(exclude_unset=True)
+
+    new_unlock_date = updates.get(
+        "unlock_date",
+        letter.unlock_date
+    )
+
+    if new_unlock_date is not None and new_unlock_date < date.today():
+        raise HTTPException(
+            status_code=422,
+            detail="Unlock date cannot be in the past"
+        )
+
+    for field, value in updates.items():
+        setattr(letter, field, value)
+
+    db.commit()
+    db.refresh(letter)
+
+    return format_future_letter(letter)
+
+
+# DELETE FUTURE LETTER
+@router.delete(
+    "/{letter_id}",
+    status_code=status.HTTP_204_NO_CONTENT
+)
+def delete_future_letter(
+    letter_id: int,
+    db: Session = Depends(get_db)
+):
+    letter = db.query(FutureLetter).filter(
+        FutureLetter.id == letter_id
+    ).first()
+
+    if letter is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Future letter not found"
+        )
+
+    db.delete(letter)
+    db.commit()
+
+    return None
+
+
+========== src\backend\routers\memories.py ==========
+
+from pathlib import Path
+from uuid import uuid4
+
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    UploadFile,
+    status
+)
+from sqlalchemy.orm import Session
+
+from backend.database.connection import get_db
+from backend.models import MemoryPhoto
+from backend.schemas.memory import (
+    MemoryPhotoUpdate,
+    MemoryPhotoResponse
+)
+
+
+router = APIRouter(
+    prefix="/memories",
+    tags=["Memories"]
+)
+
+UPLOAD_DIR = Path("uploads")
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+MAX_FILE_SIZE = 10 * 1024 * 1024
+
+ALLOWED_TYPES = {
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/webp": ".webp",
+    "image/gif": ".gif"
+}
+
+
+def format_photo(photo):
+    return MemoryPhotoResponse(
+        id=photo.id,
+        caption=photo.caption,
+        original_name=photo.original_name,
+        content_type=photo.content_type,
+        file_size=photo.file_size,
+        photo_url=f"/uploads/{photo.stored_name}",
+        created_at=photo.created_at
+    )
+
+
+# UPLOAD A PHOTO
+@router.post(
+    "/photos",
+    response_model=MemoryPhotoResponse,
+    status_code=status.HTTP_201_CREATED
+)
+async def upload_photo(
+    caption: str | None = Form(default=None),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    if file.content_type not in ALLOWED_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail="Only JPEG, PNG, WEBP and GIF images are allowed"
+        )
+
+    extension = ALLOWED_TYPES[file.content_type]
+    stored_name = f"{uuid4().hex}{extension}"
+    file_path = UPLOAD_DIR / stored_name
+
+    file_size = 0
+
+    try:
+        with file_path.open("wb") as destination:
+            while chunk := await file.read(1024 * 1024):
+                file_size += len(chunk)
+
+                if file_size > MAX_FILE_SIZE:
+                    raise HTTPException(
+                        status_code=413,
+                        detail="Image size cannot exceed 10 MB"
+                    )
+
+                destination.write(chunk)
+
+    except Exception:
+        file_path.unlink(missing_ok=True)
+        raise
+
+    finally:
+        await file.close()
+
+    photo = MemoryPhoto(
+        caption=caption,
+        original_name=(file.filename or "photo")[:255],
+        stored_name=stored_name,
+        content_type=file.content_type,
+        file_size=file_size
+    )
+
+    try:
+        db.add(photo)
+        db.commit()
+        db.refresh(photo)
+    except Exception:
+        db.rollback()
+        file_path.unlink(missing_ok=True)
+        raise
+
+    return format_photo(photo)
+
+
+# GET ALL PHOTOS
+@router.get(
+    "/photos",
+    response_model=list[MemoryPhotoResponse]
+)
+def get_photos(db: Session = Depends(get_db)):
+    photos = (
+        db.query(MemoryPhoto)
+        .order_by(MemoryPhoto.created_at.desc())
+        .all()
+    )
+
+    return [format_photo(photo) for photo in photos]
+
+
+# GET ONE PHOTO'S INFORMATION
+@router.get(
+    "/photos/{photo_id}",
+    response_model=MemoryPhotoResponse
+)
+def get_photo(
+    photo_id: int,
+    db: Session = Depends(get_db)
+):
+    photo = db.query(MemoryPhoto).filter(
+        MemoryPhoto.id == photo_id
+    ).first()
+
+    if photo is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Memory photo not found"
+        )
+
+    return format_photo(photo)
+
+
+# UPDATE PHOTO CAPTION
+@router.patch(
+    "/photos/{photo_id}",
+    response_model=MemoryPhotoResponse
+)
+def update_photo(
+    photo_id: int,
+    photo_data: MemoryPhotoUpdate,
+    db: Session = Depends(get_db)
+):
+    photo = db.query(MemoryPhoto).filter(
+        MemoryPhoto.id == photo_id
+    ).first()
+
+    if photo is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Memory photo not found"
+        )
+
+    photo.caption = photo_data.caption
+
+    db.commit()
+    db.refresh(photo)
+
+    return format_photo(photo)
+
+
+# DELETE PHOTO
+@router.delete(
+    "/photos/{photo_id}",
+    status_code=status.HTTP_204_NO_CONTENT
+)
+def delete_photo(
+    photo_id: int,
+    db: Session = Depends(get_db)
+):
+    photo = db.query(MemoryPhoto).filter(
+        MemoryPhoto.id == photo_id
+    ).first()
+
+    if photo is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Memory photo not found"
+        )
+
+    file_path = UPLOAD_DIR / photo.stored_name
+
+    db.delete(photo)
+    db.commit()
+
+    file_path.unlink(missing_ok=True)
+
+    return None
+
+
+========== src\backend\routers\about_me.py ==========
+
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from backend.database.connection import get_db
+from backend.models import AboutMe
+from backend.schemas.about_me import (
+    AboutMeUpdate,
+    AboutMeResponse
+)
+
+router = APIRouter(
+    prefix="/about-me",
+    tags=["About Me"]
+)
+
+
+def get_or_create_profile(db: Session):
+    profile = db.get(AboutMe, 1)
+
+    if profile is None:
+        profile = AboutMe(id=1)
+        db.add(profile)
+        db.commit()
+        db.refresh(profile)
+
+    return profile
+
+
+# GET PROFILE
+@router.get("/", response_model=AboutMeResponse)
+def get_profile(db: Session = Depends(get_db)):
+    return get_or_create_profile(db)
+
+
+# UPDATE PROFILE
+@router.patch("/", response_model=AboutMeResponse)
+def update_profile(
+    profile_data: AboutMeUpdate,
+    db: Session = Depends(get_db)
+):
+    profile = get_or_create_profile(db)
+
+    updates = profile_data.model_dump(exclude_unset=True)
+
+    for field, value in updates.items():
+        setattr(profile, field, value if value is not None else "")
+
+    db.commit()
+    db.refresh(profile)
+
+    return profile
+
+
+========== src\backend\routers\settings.py ==========
+
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from backend.database.connection import get_db
+from backend.models import UserSettings
+from backend.schemas.settings import (
+    SettingsUpdate,
+    SettingsResponse
+)
+
+router = APIRouter(
+    prefix="/settings",
+    tags=["Settings"]
+)
+
+
+def get_or_create_settings(db: Session):
+    settings = db.get(UserSettings, 1)
+
+    if settings is None:
+        settings = UserSettings(id=1)
+        db.add(settings)
+        db.commit()
+        db.refresh(settings)
+
+    return settings
+
+
+# GET SETTINGS
+@router.get("/", response_model=SettingsResponse)
+def get_settings(db: Session = Depends(get_db)):
+    return get_or_create_settings(db)
+
+
+# UPDATE SETTINGS
+@router.patch("/", response_model=SettingsResponse)
+def update_settings(
+    settings_data: SettingsUpdate,
+    db: Session = Depends(get_db)
+):
+    settings = get_or_create_settings(db)
+
+    updates = settings_data.model_dump(exclude_unset=True)
+
+    for field, value in updates.items():
+        if value is not None:
+            setattr(settings, field, value)
+
+    db.commit()
+    db.refresh(settings)
+
+    return settings
